@@ -9,9 +9,10 @@ Add-ons and helpers for A-Frame VR.
 Includes components for controls, model loaders, pathfinding, and more:
 
 <!-- tree src -I index.js -->
+
 <pre>
 src
-├── <b>controls/</b> (<a href="/src/controls">Documentation</a>)
+├── <b>controls/</b> (<a href="https://c-frame.github.io/aframe-extras/src/controls">Documentation</a>) (<a href="https://github.com/c-frame/aframe-extras/tree/master/src/controls">Code</a>)
 │   ├── movement-controls.js
 │   ├── checkpoint-controls.js
 │   ├── gamepad-controls.js
@@ -19,13 +20,13 @@ src
 │   ├── mouse-controls.js
 │   ├── touch-controls.js
 │   └── trackpad-controls.js
-├── <b>loaders/</b> (<a href="/src/loaders">Documentation</a>)
+├── <b>loaders/</b> (<a href="https://c-frame.github.io/aframe-extras/src/loaders">Documentation</a>) (<a href="https://github.com/c-frame/aframe-extras/tree/master/src/loaders">Code</a>)
 │   ├── animation-mixer.js
 │   ├── collada-model-legacy.js
 │   ├── fbx-model.js
 │   ├── gltf-model-legacy.js
 │   └── object-model.js
-├── <b>misc/</b> (<a href="/src/misc">Documentation</a>)
+├── <b>misc/</b> (<a href="https://c-frame.github.io/aframe-extras/src/misc">Documentation</a>) (<a href="https://github.com/c-frame/aframe-extras/tree/master/src/misc">Code</a>)
 │   ├── checkpoint.js
 │   ├── cube-env-map.js
 │   ├── grab.js
@@ -70,7 +71,7 @@ For partial builds, use a subpackage like `aframe-extras.controls.min.js`. Full 
 | v0.3.X   | */v2.6.1             |
 | v0.2.X   | */v1.17.0            |
 
-> **NOTE:** Several components and examples also rely on [aframe-physics-system](https://github.com/donmccurdy/aframe-physics-system).
+> **NOTE:** Several components and examples also rely on [aframe-physics-system](https://github.com/c-frame/aframe-physics-system).
 
 ## Usage (NPM)
 

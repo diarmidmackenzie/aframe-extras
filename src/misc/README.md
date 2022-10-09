@@ -36,4 +36,4 @@ Usage:
 
 > **WARNING** *Using physics for movement is unstable and performs poorly. When preventing players from passing through obstacles, use a navigation mesh instead whenever possible.*
 
-The `kinematic-body` component constraints player movement using physics, and depends on [aframe-physics-system](http://github.com/donmccurdy/aframe-physics-system/). Using physics for locomotion is not VR-friendly, and often glitchy even for traditional 3D experiences. [Use a navigation mesh](https://github.com/donmccurdy/aframe-extras/tree/master/src/controls#usage) instead, whenever possible.
+The `kinematic-body` component constraints player movement using physics, and depends on [aframe-physics-system](http://github.com/c-frame/aframe-physics-system/). Using physics for locomotion is not VR-friendly, and often glitchy even for traditional 3D experiences. [Use a navigation mesh](https://github.com/c-frame/aframe-extras/tree/master/src/controls#usage) instead, whenever possible.
