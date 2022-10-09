@@ -65,10 +65,10 @@ module.exports = AFRAME.registerComponent('gamepad-controls', {
     // Rotation
     const rotation = this.el.object3D.rotation;
     this.pitch = new THREE.Object3D();
-    this.pitch.rotation.x = THREE.Math.degToRad(rotation.x);
+    this.pitch.rotation.x = THREE.MathUtils.degToRad(rotation.x);
     this.yaw = new THREE.Object3D();
     this.yaw.position.y = 10;
-    this.yaw.rotation.y = THREE.Math.degToRad(rotation.y);
+    this.yaw.rotation.y = THREE.MathUtils.degToRad(rotation.y);
     this.yaw.add(this.pitch);
 
     this._lookVector = new THREE.Vector2();
@@ -178,7 +178,7 @@ module.exports = AFRAME.registerComponent('gamepad-controls', {
     yaw.rotation.y -= lookVector.x;
     pitch.rotation.x -= lookVector.y;
     pitch.rotation.x = Math.max(- Math.PI / 2, Math.min(Math.PI / 2, pitch.rotation.x));
-    data.camera.object3D.rotation.set(pitch.rotation.x, yaw.rotation.y, 0);
+    this.el.object3D.rotation.set(pitch.rotation.x, yaw.rotation.y, 0);
 
     // Sync with look-controls pitch/yaw if available.
     if (hasLookControls) {
@@ -251,7 +251,7 @@ module.exports = AFRAME.registerComponent('gamepad-controls', {
         const xrController = this.system.controllers[i];
         const xrGamepad = xrController ? xrController.gamepad : null;
         _xrGamepads.push(xrGamepad);
-        if (xrGamepad && xrGamepad.handedness === handPreference) return xrGamepad;
+        if (xrGamepad && xrController.handedness === handPreference) return xrGamepad;
       }
 
       // https://developer.mozilla.org/en-US/docs/Web/API/Gamepad/hand
@@ -296,7 +296,7 @@ module.exports = AFRAME.registerComponent('gamepad-controls', {
       // See: https://github.com/donmccurdy/aframe-extras/issues/307
       switch (index) {
         case Joystick.MOVEMENT: return target.set(gamepad.axes[2], gamepad.axes[3]);
-        case Joystick.ROTATION: return target.set(gamepad.axes[0], gamepad.axes[1]);
+        case Joystick.ROTATION: return target.set(gamepad.axes[2], 0);
       }
     } else {
       switch (index) {
