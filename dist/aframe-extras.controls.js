@@ -924,9 +924,6 @@ module.exports = AFRAME.registerComponent('gamepad-controls', {
     // Enable/disable gamepad-controls
     enabled: { default: true },
 
-    // Heading element for rotation
-    camera: { default: '[camera]', type: 'selector' },
-
     // Rotation sensitivity
     rotationSensitivity: { default: 2.0 }
   },
@@ -951,10 +948,10 @@ module.exports = AFRAME.registerComponent('gamepad-controls', {
     // Rotation
     var rotation = this.el.object3D.rotation;
     this.pitch = new THREE.Object3D();
-    this.pitch.rotation.x = THREE.MathUtils.degToRad(rotation.x);
+    this.pitch.rotation.x = rotation.x;
     this.yaw = new THREE.Object3D();
     this.yaw.position.y = 10;
-    this.yaw.rotation.y = THREE.MathUtils.degToRad(rotation.y);
+    this.yaw.rotation.y = rotation.y;
     this.yaw.add(this.pitch);
 
     this._lookVector = new THREE.Vector2();
@@ -1046,14 +1043,11 @@ module.exports = AFRAME.registerComponent('gamepad-controls', {
     var data = this.data;
     var yaw = this.yaw;
     var pitch = this.pitch;
-    var lookControls = data.camera.components['look-controls'];
-    var hasLookControls = lookControls && lookControls.pitchObject && lookControls.yawObject;
 
-    // Sync with look-controls pitch/yaw if available.
-    if (hasLookControls) {
-      pitch.rotation.copy(lookControls.pitchObject.rotation);
-      yaw.rotation.copy(lookControls.yawObject.rotation);
-    }
+    // First copy camera rig pitch/yaw, it may have been changed from
+    // another component.
+    yaw.rotation.y = this.el.object3D.rotation.y;
+    pitch.rotation.x = this.el.object3D.rotation.x;
 
     var lookVector = this._lookVector;
 
@@ -1067,12 +1061,6 @@ module.exports = AFRAME.registerComponent('gamepad-controls', {
     pitch.rotation.x -= lookVector.y;
     pitch.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch.rotation.x));
     this.el.object3D.rotation.set(pitch.rotation.x, yaw.rotation.y, 0);
-
-    // Sync with look-controls pitch/yaw if available.
-    if (hasLookControls) {
-      lookControls.pitchObject.rotation.copy(pitch.rotation);
-      lookControls.yawObject.rotation.copy(yaw.rotation);
-    }
   },
 
   /*******************************************************************
@@ -1175,6 +1163,11 @@ module.exports = AFRAME.registerComponent('gamepad-controls', {
    */
   getJoystick: function getJoystick(index, target) {
     var gamepad = this.getGamepad(index === Joystick.MOVEMENT ? Hand.LEFT : Hand.RIGHT);
+    // gamepad can be null here if it becomes disconnected even if isConnected() was called
+    // in the same tick before calling getJoystick.
+    if (!gamepad) {
+      return target.set(0, 0);
+    }
     if (gamepad.mapping === 'xr-standard') {
       // See: https://github.com/donmccurdy/aframe-extras/issues/307
       switch (index) {
@@ -1201,6 +1194,9 @@ module.exports = AFRAME.registerComponent('gamepad-controls', {
    */
   getDpad: function getDpad(target) {
     var gamepad = this.getGamepad(Hand.LEFT);
+    if (!gamepad) {
+      return target.set(0, 0);
+    }
     if (!gamepad.buttons[GamepadButton.DPAD_RIGHT]) {
       return target.set(0, 0);
     }
@@ -1239,10 +1235,12 @@ require('./trackpad-controls');
 },{"./checkpoint-controls":5,"./gamepad-controls":6,"./keyboard-controls":8,"./movement-controls":9,"./touch-controls":10,"./trackpad-controls":11}],8:[function(require,module,exports){
 'use strict';
 
+/* global AFRAME, THREE */
+/* eslint-disable no-prototype-builtins */
+
 require('../../lib/keyboard.polyfill');
 
-var MAX_DELTA = 0.2,
-    PROXY_FLAG = '__keyboard-controls-proxy';
+var PROXY_FLAG = '__keyboard-controls-proxy';
 
 var KeyboardEvent = window.KeyboardEvent;
 
@@ -1281,7 +1279,6 @@ module.exports = AFRAME.registerComponent('keyboard-controls', {
       blur: this.onBlur.bind(this),
       onContextMenu: this.onContextMenu.bind(this)
     };
-    this.attachEventListeners();
   },
 
   /*******************************************************************
@@ -1293,8 +1290,8 @@ module.exports = AFRAME.registerComponent('keyboard-controls', {
   },
 
   getVelocityDelta: function getVelocityDelta() {
-    var data = this.data,
-        keys = this.getKeys();
+    var data = this.data;
+    var keys = this.getKeys();
 
     this.dVelocity.set(0, 0, 0);
     if (data.enabled) {
@@ -1327,12 +1324,8 @@ module.exports = AFRAME.registerComponent('keyboard-controls', {
     this.removeEventListeners();
   },
 
-  remove: function remove() {
-    this.pause();
-  },
-
   attachEventListeners: function attachEventListeners() {
-    window.oncontextmenu = this.listeners.onContextMenu;
+    window.addEventListener("contextmenu", this.listeners.onContextMenu, false);
     window.addEventListener("keydown", this.listeners.keydown, false);
     window.addEventListener("keyup", this.listeners.keyup, false);
     window.addEventListener("blur", this.listeners.blur, false);
@@ -1663,6 +1656,10 @@ module.exports = AFRAME.registerComponent('touch-controls', {
 
     canvasEl.addEventListener('touchstart', this.onTouchStart);
     canvasEl.addEventListener('touchend', this.onTouchEnd);
+    var vrModeUI = sceneEl.getAttribute('vr-mode-ui');
+    if (vrModeUI && vrModeUI.cardboardModeEnabled) {
+      sceneEl.addEventListener('enter-vr', this.onEnterVR);
+    }
   },
 
   removeEventListeners: function removeEventListeners() {
@@ -1673,6 +1670,7 @@ module.exports = AFRAME.registerComponent('touch-controls', {
 
     canvasEl.removeEventListener('touchstart', this.onTouchStart);
     canvasEl.removeEventListener('touchend', this.onTouchEnd);
+    this.el.sceneEl.removeEventListener('enter-vr', this.onEnterVR);
   },
 
   isVelocityActive: function isVelocityActive() {
@@ -1687,11 +1685,12 @@ module.exports = AFRAME.registerComponent('touch-controls', {
   bindMethods: function bindMethods() {
     this.onTouchStart = this.onTouchStart.bind(this);
     this.onTouchEnd = this.onTouchEnd.bind(this);
+    this.onEnterVR = this.onEnterVR.bind(this);
   },
 
   onTouchStart: function onTouchStart(e) {
     this.direction = -1;
-    if (this.data.reverseEnabled && e.touches.length === 2) {
+    if (this.data.reverseEnabled && e.touches && e.touches.length === 2) {
       this.direction = 1;
     }
     e.preventDefault();
@@ -1700,6 +1699,16 @@ module.exports = AFRAME.registerComponent('touch-controls', {
   onTouchEnd: function onTouchEnd(e) {
     this.direction = 0;
     e.preventDefault();
+  },
+
+  onEnterVR: function onEnterVR() {
+    // This is to make the Cardboard button on Chrome Android working
+    var xrSession = this.el.sceneEl.xrSession;
+    if (!xrSession) {
+      return;
+    }
+    xrSession.addEventListener('selectstart', this.onTouchStart);
+    xrSession.addEventListener('selectend', this.onTouchEnd);
   }
 });
 
